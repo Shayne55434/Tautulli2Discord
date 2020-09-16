@@ -18,7 +18,7 @@ I have set my scripts up to run as a Scheduled Task, so it's completely hands of
 Probably. Just let me know and I will try to correct.
 
 # Thanks
-Many thanks to F.S.Corrupt for his help and contributions. And thanks to Ladrek for coming up with some of the ideas for these scripts.
+Many thanks to FS.Corrupt for his help and contributions. And thanks to Ladrek for coming up with some of the ideas for these scripts.
 
 # Enjoy
 This one is simple.
