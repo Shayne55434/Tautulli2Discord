@@ -10,7 +10,7 @@ I tried to make the scripts as easy to use as possible. All of the scripts have 
 Information on how to set up a Discord webhook can be found be [here.](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
 
 # Usage
-That's it. Once the webhook(s) are created and the variables are filled in properly, you should be able to run the scripts and it send the relevant to your Discord server/channel.
+That's it. Once the webhook(s) are created and the variables are filled in properly, you should be able to run the scripts and it send the relevant information to your Discord server/channel.
 
 I have set my scripts up to run as a Scheduled Task, so it's completely hands off.
 
