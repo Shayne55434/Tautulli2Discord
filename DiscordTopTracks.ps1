@@ -15,13 +15,13 @@ $Count = '10'
 $Days = '30'
 
 #Discord Webhook Prod Uri
-$Uri = "https://discord.com/api/webhooks/732620980601487454/oYXX6zIrtgyFORlRPRYrCW8c9cyhTTbLCicS2J-6BHI3cLcv97pHya2EerfBipqycz2A"
+$Uri = "XXXXXX"
 
 #Tautulli URL with port
-$URL = "192.168.0.32:8181"
+$URL = "XXXXXX"
 
 #Tautulli API Key
-$apiKey='0c14b635454d47ea9ac279269d96c169'
+$apiKey='XXXXXX'
 
 <############################################################
 
