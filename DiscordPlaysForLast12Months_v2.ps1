@@ -18,7 +18,7 @@ $ImagePath = "C:\temp\MonthlyStats.png"
 
 # PowerShell variables
 $PSCore = "C:\Program Files\PowerShell\7-preview\pwsh.exe"
-$SendScriptPath = "C:\Users\Shayne\Google Drive\Plex Stuff\PowerShell\DiscordSendFile.ps1"
+$SendScriptPath = "C:\Scripts\DiscordSendFile.ps1"
 
 <############################################################
 
