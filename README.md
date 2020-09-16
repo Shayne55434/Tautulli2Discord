@@ -14,6 +14,22 @@ That's it. Once the webhook(s) are created and the variables are filled in prope
 
 I have set my scripts up to run as a Scheduled Task, so it's completely hands off.
 
+# Examples
+DiscordCurrentlyStreaming.ps1
+![DiscordCurrentlyStreaming.ps1](https://i.imgur.com/bWpFF2x.png)
+
+DiscordLibraryStats.ps1
+
+![DiscordLibraryStats.ps1](https://i.imgur.com/ghONij6.png)
+
+DiscordPlaysForLast12Months_v2.ps1
+
+![DiscordPlaysForLast12Months_v2.ps1](https://i.imgur.com/6KxU9r5.png)
+
+DiscordTopXUsersByMediaType.ps1
+
+![DiscordTopXUsersByMediaType.ps1](https://i.imgur.com/0SNBXA9.png)
+
 # Issues
 Probably. Just let me know and I will try to correct.
 
