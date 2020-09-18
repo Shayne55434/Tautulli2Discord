@@ -9,6 +9,8 @@ $URL = "XXXXXX"
 # Tautulli Api Key
 $apiKey='XXXXXX'
 
+# If you want Tautulli to calculate the total file size for TV Shows/Seasons and Artists/Albums, you must
+# enable "Calculate Total File Sizes" in Settings > General AND refresh media info.
 # Libraries to exclude
 $ExcludedLibraries = @('Photos', 'Live TV', 'Fitness', 'Audiobooks')
 
