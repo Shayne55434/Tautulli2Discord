@@ -148,6 +148,7 @@ CreateChart
 
 # Convert the object to a string
 $stringResult = $objResult | FT | Out-String
+$stringResult = '```' + $stringResult + '```'
 
 <# Preview the data
 $stringResult
@@ -155,8 +156,7 @@ $stringResult
 
 $Content = @"
 **Monthly Plays:**
-```
-$stringResult```
+$stringResult
 "@
 
 # Create Payload and send to Discord
