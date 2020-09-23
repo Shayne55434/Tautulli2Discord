@@ -24,7 +24,7 @@ DiscordLibraryStats.ps1
 
 DiscordPlaysForLast12Months_v2.ps1
 
-![DiscordPlaysForLast12Months_v2.ps1](https://i.imgur.com/6KxU9r5.png)
+![DiscordPlaysForLast12Months_v2.ps1](https://i.imgur.com/NLqkeI2.png)
 
 DiscordTopXUsersByMediaType.ps1
 
