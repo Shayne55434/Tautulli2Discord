@@ -1,4 +1,4 @@
-﻿Clear-Host
+Clear-Host
 
 <############################################################
 
@@ -11,7 +11,7 @@ Note - In order for this to work, you must set "api_sql = 1"
 # Enter the path to the config file for Tautulli and Discord
 $strPathToConfig = "$PSScriptRoot\config.json"
 
-# Discord webhook name. This should match the webhook name in the config file under "[Webhooks]".
+# Discord webhook name. This should match the webhook name in the INI file under "[Webhooks]".
 $WebhookName = "Top5"
 
 # Top Play Movie/Show Count
@@ -93,6 +93,7 @@ FROM (
 GROUP BY user, media_type
 "
 
+
 [string]$script:DiscordURL = $config.Webhooks.$WebhookName
 [string]$URL = $config.Tautulli.URL
 [string]$apiKey = $config.Tautulli.APIKey
@@ -117,9 +118,9 @@ $StreamList = $null
 #Complete API URL
 $apiURL = "$URL/api/v2?apikey=$apiKey&cmd=get_home_stats&grouping=1&time_range=$Days&stats_count=$Count"
 $DataResult = Invoke-RestMethod -Method Get -Uri $apiURL
-$top_movies = ($DataResult.response.data | Where -property stat_id -eq "top_movies").rows
-$top_tv = ($DataResult.response.data | Where -property stat_id -eq "top_tv").rows
-$top_music = ($DataResult.response.data | Where -property stat_id -eq "top_music").rows
+$top_movies = ($DataResult.response.data | Where -property stat_id -eq "popular_movies").rows
+$top_tv = ($DataResult.response.data | Where -property stat_id -eq "popular_tv").rows
+$top_music = ($DataResult.response.data | Where -property stat_id -eq "popular_music").rows
 $top_users = ($DataResult.response.data | Where -property stat_id -eq "top_users").rows
 $top_platforms = ($DataResult.response.data | Where -property stat_id -eq "top_platforms").rows
 $most_concurrent = ($DataResult.response.data | Where -property stat_id -eq "most_concurrent").rows
@@ -137,7 +138,7 @@ foreach ($user in $TopUsers_Music) {
 }
 
 foreach ($movie in $top_movies) {
-   # Sanitize the movie title. I ran into an issue with "WALL·E" and it would not send to Discord.
+   #Sanitize the movie title. I ran into an issue with "WALL·E" and it would not send to Discord.
    $CleanMovieTitle = $movie.title `
       -replace '·', ' ' `
       -replace 'ö','oe' `
@@ -157,21 +158,21 @@ foreach ($movie in $top_movies) {
    WHERE rating_key = '$RatingKey'
    "
 
-   # Complete API URL for SQL querying
+   #Complete API URL for SQL querying
    $apiSQLQueryURL = "$URL/api/v2?apikey=$apiKey&cmd=sql&query=" + $query
    $SQLQuerydataResult = Invoke-RestMethod -Method Get -Uri $apiSQLQueryURL
    $tmdbURL = $SQLQuerydataResult.response.data.themoviedb_url
 
    if ($tmdbURL -ne "" -and $tmdbURL -ne $null) {
-      $MovieList += "> [$CleanMovieTitle](<$tmdbURL>) - **$($Movie.total_plays)** Plays`n"
+      $MovieList += "> [$CleanMovieTitle](<$tmdbURL>) - **$($Movie.users_watched)** Users have watched`n"
    }
    else {
-      $MovieList += "> $CleanMovieTitle - **$($movie.total_plays)** Plays`n"
+      $MovieList += "> $CleanMovieTitle - **$($movie.users_watched)** Users have watched`n"
    }
 }
 
 foreach ($show in $top_tv) {
-   # Sanitize the show title.
+   #Sanitize the show title.
    $CleanShowTitle = $show.title `
       -replace '·', ' ' `
       -replace 'ö','oe' `
@@ -183,33 +184,34 @@ foreach ($show in $top_tv) {
       -replace 'Ä','Ae' `
       -replace 'é','e'
    $RatingKey = $show.rating_key
-   
+
    # This section gets TMDB Url
    $query = "
    SELECT themoviedb_url
    FROM themoviedb_lookup 
    WHERE rating_key = '$RatingKey'
    "
-   
-   # Complete API URL for SQL querying
+
+   #Complete API URL for SQL querying
    $apiSQLQueryURL = "$URL/api/v2?apikey=$apiKey&cmd=sql&query=" + $query
    $SQLQuerydataResult = Invoke-RestMethod -Method Get -Uri $apiSQLQueryURL
    $tmdbURL = $SQLQuerydataResult.response.data.themoviedb_url
-   
+
    if ($tmdbURL -ne "" -and $tmdbURL -ne $null) {
-      $ShowList += "> [$CleanShowTitle](<$tmdbURL>) - **$($show.total_plays)** Plays`n"
+      $ShowList += "> [$CleanShowTitle](<$tmdbURL>) - **$($show.users_watched)** Users have watched`n"
    }
    else {
-      $ShowList += "> $CleanShowTitle - **$($show.total_plays)** Plays`n"
+      $ShowList += "> $CleanShowTitle - **$($show.users_watched)** Users have watched`n"
    }
 }
 
 foreach ($artist in $top_music) {
-   $ArtistList += "> $($artist.title) - **$($artist.total_plays)** Plays`n"
+   $ArtistList += "> $($artist.title) - **$($artist.users_watched)** Users have listened`n"
 }
 
 foreach ($user in $top_users) {
-   $UserList += "> $($user.friendly_name) - **$($user.total_plays)** Plays`n"
+   $ts = New-TimeSpan -Seconds $user.total_duration
+   $UserList += "> $($user.friendly_name) - **$($user.total_plays)** Plays for a total of $($ts.Days) days, $($ts.Hours) hours, $($ts.Minutes) minutes`n"
 }
 
 foreach ($platform in $top_platforms) {
@@ -228,11 +230,11 @@ SendStringToDiscord -title "Top $Count **Users** in TV for the last $Days Days!"
 
 SendStringToDiscord -title "Top $Count **Users** in Music for the last $Days Days!" -body $UserMusicPlays
 
-SendStringToDiscord -title "Top $Count played **Movies** in the last $Days Days!" -body $MovieList
+SendStringToDiscord -title "Top $Count most popular **Movies** in the last $Days Days!" -body $MovieList
 
-SendStringToDiscord -title "Top $Count played **Shows** in the last $Days Days!" -body $ShowList
+SendStringToDiscord -title "Top $Count most popular **Shows** in the last $Days Days!" -body $ShowList
 
-SendStringToDiscord -title "Top $Count **Artists** in the last $Days Days!" -body $ArtistList
+SendStringToDiscord -title "Top $Count most popular **Artists** in the last $Days Days!" -body $ArtistList
 
 SendStringToDiscord -title "Top $Count **Platforms** in the last $Days Days!" -body $platformList
 
