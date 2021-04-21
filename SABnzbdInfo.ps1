@@ -1,13 +1,12 @@
-﻿Clear-Host
+Clear-Host
 
 # Enter the path to the config file for Tautulli and Discord
 $strPathToConfig = "$PSScriptRoot\config.json"
 
-# Discord webhook name. This should match the webhook name in the config file under "[Webhooks]".
+# Discord webhook name. This should match the webhook name in the INI file under "[Webhooks]".
 $WebhookName = "SABnzbd"
 
 # Log file path
-#$SABLog = "C:\Users\Shayne\Google Drive\Plex Stuff\PowerShell\Updated Scripts\SABLog.txt"
 $SABLog = "$PSScriptRoot\SABLog.txt"
 
 <############################################################
@@ -50,6 +49,7 @@ $body
 
 # Parse the config file and assign variables
 $config = Get-Content -Path $strPathToConfig -Raw | ConvertFrom-Json
+
 [string]$script:DiscordURL = $config.Webhooks.$WebhookName
 [string]$URL = $config.SABnzbd.URL
 [string]$apiKey = $config.SABnzbd.APIKey
@@ -58,7 +58,7 @@ $SABnzbdInfo = (Invoke-RestMethod -Method Get -Uri $apiURL).queue
 $objResult = @()
 
 if (($SABnzbdInfo.slots).Count -gt 0) {
-   $summary = "Downloading " + ($SABnzbdInfo.slots).Count + " items at " + $SABnzbdInfo.speed + "/second. Time remaining: $($SABnzbdInfo.timeleft)"
+   $summary = "Downloading " + ($SABnzbdInfo.slots).Count + " items at " + $SABnzbdInfo.speed + "B/second. Time remaining: $($SABnzbdInfo.timeleft)"
    
    foreach ($slot in $SABnzbdInfo.slots) {
       $objTemp = [PSCustomObject]@{
@@ -74,29 +74,30 @@ if (($SABnzbdInfo.slots).Count -gt 0) {
       $objResult += $objTemp
    }
    
-   $body = $objResult | FT -AutoSize | Out-String
-   
+   # Additional steps to clean up the output and avoid Discord's 2000 character limit
+   $body = ($objResult | Select-Object -First 20 | FT -AutoSize | Out-String).Trim()
+
    # Send to Discord
    SendStringToDiscord -title "**$summary**" -body $body
 }
 else {
-   $summary = "Downloading 0 items at 0 MBps/second. Time remaining: NA"
+   $summary = "Downloading 0 items at 0 MB/second. Time remaining: NA"
    $body = "Nothing currently being downloaded."
    
    if(!(Test-Path $SABLog)) { # Log file doesn't exist yet. Create it and send message to Discord
-      $body | Out-File -FilePath $SABLog -Force
+      "0" | Out-File -FilePath $SABLog -Force
       
       # Send to Discord
       SendStringToDiscord -title "**$summary**" -body $body
    }
    else { # Log file exists. Run a compare to see if Discord needs to be updated
-      $lastSABLog = Get-Content $SABLog | Out-String
+      [int]$lastSABLog = Get-Content $SABLog
       
-      if ($lastSABLog -match $body) { # The last message sent to Discord matches the latest message
+      if ($lastSABLog -eq 0) { # The last message sent to Discord matches the latest message
          Write-Host "Nothing to update."
       }
       else { # The last message sent to Discord does NOT match the latest message. Update the log file and send to Discord
-         $body | Out-File -FilePath $SABLog -Force
+         "0" | Out-File -FilePath $SABLog -Force
          
          # Send to Discord
          SendStringToDiscord -title "**$summary**" -body $body
