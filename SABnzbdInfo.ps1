@@ -60,6 +60,9 @@ $objResult = @()
 if (($SABnzbdInfo.slots).Count -gt 0) {
    $summary = "Downloading " + ($SABnzbdInfo.slots).Count + " items at " + $SABnzbdInfo.speed + "B/second. Time remaining: $($SABnzbdInfo.timeleft)"
    
+   # Update the log file with current number of downloads
+   ($SABnzbdInfo.slots).Count | Out-File -FilePath $SABLog -Force
+   
    foreach ($slot in $SABnzbdInfo.slots) {
       $objTemp = [PSCustomObject]@{
          FileName = ($slot.filename).Substring(0, 30) + "..." # This is used to reduce the length, as filenames can be 50+ characters long
