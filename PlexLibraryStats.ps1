@@ -1,5 +1,9 @@
 ﻿Clear-Host
 
+# For this script to include library sizes, you need to go into
+# Tautulli > Settings > General > and enable "Calculate Total File Sizes".
+# It may take a while for Tautulli to update the stats, depending on your library sizes.
+
 # Enter the path to the config file for Tautulli and Discord
 $strPathToConfig = "$PSScriptRoot\config.json"
 
