@@ -153,7 +153,7 @@ foreach ($movie in $top_movies) {
 
    # This section gets TMDB Url
    $query = "
-   SELECT themoviedb_url
+   SELECT *
    FROM themoviedb_lookup 
    WHERE rating_key = '$RatingKey'
    "
@@ -187,9 +187,15 @@ foreach ($show in $top_tv) {
 
    # This section gets TMDB Url
    $query = "
-   SELECT themoviedb_url
-   FROM themoviedb_lookup 
-   WHERE rating_key = '$RatingKey'
+    SELECT *
+    FROM themoviedb_lookup 
+    WHERE rating_key IN (
+	    SELECT
+	    rating_key
+	    FROM session_history_metadata
+	    WHERE media_type = 'episode'
+	    AND grandparent_title = '" + ($show.title).Replace("'", "''") + "'
+    )
    "
 
    #Complete API URL for SQL querying
