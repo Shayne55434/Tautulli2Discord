@@ -16,7 +16,12 @@ I have set my scripts up to run as a Scheduled Task, so it's completely hands of
 
 # Examples
 CurrentStreams.ps1
+
 ![DiscordCurrentlyStreaming.ps1](https://i.imgur.com/pDA3Tvs.png)
+
+PopularOnPlex.ps1
+
+![PopularOnPlex.ps1](https://i.imgur.com/MpEhVWJ.png)
 
 LibraryStats.ps1
 
