@@ -1,8 +1,7 @@
 ﻿Clear-Host
 
 # Enter the path to the config file for Tautulli and Discord
-#$strPathToConfig = "$PSScriptRoot\config.json"
-$strPathToConfig = "C:\Users\Shayne\Google Drive\Plex Stuff\PowerShell\Embeds\config.json"
+$strPathToConfig = "$PSScriptRoot\config.json"
 
 # Discord webhook name. This should match the webhook name in the INI file under "[Webhooks]".
 $WebhookName = "PopularOnPlex"
@@ -14,7 +13,7 @@ $Count = '5'
 $Days = '30'
 
 # This script requires an API from TheMovieDB.org
-$tmdb_api = "925ae90afc31c5d281f0c8b7da82361b"
+$tmdb_api = "XXXXXXXXXXXXXXXXXXXXXXXX"
 
 <############################################################
 
