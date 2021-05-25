@@ -17,7 +17,7 @@ $tmdb_api = "XXXXXXXXXXXXXXXXXXXXXXXX"
 
 <############################################################
 
-Do NOT edit lines below unless you know what you are doing!
+    Do NOT edit lines below unless you know what you are doing!
 
 ############################################################>
 
@@ -28,14 +28,28 @@ function SendStringToDiscord($url, $body) {
    }
 
    try {
-      Invoke-RestMethod -Uri $url -Body ($payload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json'
+      Invoke-RestMethod -Uri $url -Body ($payload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json' -ErrorVariable RestError
       Sleep -Seconds 1
    }
    catch {
-      Write-Host "Unable to send to Discord." -ForegroundColor Red
-      Write-Host $body
+      Write-Host "Unable to send to Discord.... Error Message:" -ForegroundColor Yellow
+      write-host "$RestError" -ForegroundColor Red
+     Write-Host ''
+     Write-Host "Message Body:" -ForegroundColor Yellow
+     Write-Host $body
    }
 }
+function SanitizeTitle{
+    Param(
+        [String]$inputString
+    )
+    $replaceTable = @{"ß"="ss";"à"="a";"á"="a";"â"="a";"ã"="a";"ä"="a";"å"="a";"æ"="ae";"ç"="c";"è"="e";"é"="e";"ê"="e";"ë"="e";"ì"="i";"í"="i";"î"="i";"ï"="i";"ð"="d";"ñ"="n";"ò"="o";"ó"="o";"ô"="o";"õ"="o";"ö"="o";"ø"="o";"ù"="u";"ú"="u";"û"="u";"ü"="u";"ý"="y";"þ"="p";"ÿ"="y"}
+
+    foreach($key in $replaceTable.Keys){
+        $inputString = $inputString -Replace($key,$replaceTable.$key)
+    }
+    return $inputString
+  }
 
 # Parse the config file and assign variables
 $config = Get-Content -Path $strPathToConfig -Raw | ConvertFrom-Json
@@ -52,16 +66,24 @@ $top_music = ($DataResult.response.data | Where -property stat_id -eq "popular_m
 
 [System.Collections.ArrayList]$embedTopMovies = @()
 foreach ($movie in $top_movies) {
-   $tmdbURL = "https://api.themoviedb.org/3/search/movie?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&year=" + $movie.year + "&query=" + $movie.title
-
+  #Sanitize the movie title. I ran into an issue with "WALLÂ·E" and it would not send to Discord.
+  $CleanMovieTitle = SanitizeTitle -inputString $movie.title
+    
+  if ($movie.year) {
+    $tmdbURL = "https://api.themoviedb.org/3/search/movie?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&year=" + $movie.year + "&query=" + $CleanMovieTitle
+  }
+  Else{
+    $tmdbURL = "https://api.themoviedb.org/3/search/movie?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&query=" + $CleanMovieTitle
+  }
    # Highly inaccurate method and relies on tmdb's ability to match the search title and year, but what other choice do I have?
    $movie_id = (Invoke-RestMethod -Method Get -Uri $tmdbURL).results[0].id
    $tmdbResults = Invoke-RestMethod -Method Get -Uri ("https://api.themoviedb.org/3/movie/" + $movie_id + "?api_key=" + $tmdb_api + "&language=en-US")
-
+   $tmdbResultstitle = SanitizeTitle -inputString $tmdbResults.title
+   
    if($tmdbResults.count -eq 0) {
        $embedObject = [PSCustomObject]@{
            color = '13400320'
-           title = ($movie.title).Replace('·', '-')
+           title = $CleanMovieTitle.Replace('·', '-')
            url = "https://www.themoviedb.org/movie/"
            author = [PSCustomObject]@{
              name = "Open on Plex"
@@ -89,7 +111,7 @@ foreach ($movie in $top_movies) {
    else {
        $embedObject = [PSCustomObject]@{
            color = '13400320'
-           title = ($tmdbResults.original_title).Replace('·', '-')
+           title = $tmdbResultstitle.Replace('·', '-')
            url = "https://www.themoviedb.org/movie/$($tmdbResults.id)"
            author = [PSCustomObject]@{
              name = "Open on Plex"
@@ -122,16 +144,26 @@ $embedTopMovies | FT
 
 [System.Collections.ArrayList]$embedTopTV = @()
 foreach ($show in $top_tv) {
-   $tmdbURL = "https://api.themoviedb.org/3/search/tv?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&query=" + $show.title
+  #Sanitize the movie title. I ran into an issue with "WALLÂ·E" and it would not send to Discord.
+  $CleanShowTitle = SanitizeTitle -inputString $show.title
+    
+  if ($show.year) {
+    $tmdbURL = "https://api.themoviedb.org/3/search/tv?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&year=" + $show.year + "&query=" + $CleanShowTitle
+  }
+  Else{
+    $tmdbURL = "https://api.themoviedb.org/3/search/tv?api_key=" + $tmdb_api + "&language=en-US&page=1&include_adult=false&query=" + $CleanShowTitle
+  }
 
    # Highly inaccurate method and relies on tmdb's ability to match the search title, but what other choice do I have?
    $tv_id = (Invoke-RestMethod -Method Get -Uri $tmdbURL).results[0].id
    $tmdbResults = Invoke-RestMethod -Method Get -Uri ("https://api.themoviedb.org/3/tv/" + $tv_id + "?api_key=" + $tmdb_api + "&language=en-US")
 
+   $tmdbResultsname = SanitizeTitle -inputString $tmdbResults.name
+
    if($tmdbResults.count -eq 0) { #This is likely due to RatingKey being changed
        $embedObject = [PSCustomObject]@{
            color = '40635'
-           title = $show.title
+           title = $CleanShowTitle
            #url = "https://www.themoviedb.org/movie/$($json.id)"
            author = [PSCustomObject]@{
              name = "Open on Plex"
@@ -159,7 +191,7 @@ foreach ($show in $top_tv) {
    else {
        $embedObject = [PSCustomObject]@{
            color = '40635'
-           title = $tmdbResults.original_name
+           title = $tmdbResultsname
            url = "https://www.themoviedb.org/tv/$($tmdbResults.id)"
            author = [PSCustomObject]@{
              name = "Open on Plex"
@@ -199,17 +231,17 @@ foreach ($show in $top_tv) {
 $embedTopTV | FT
 
 #
-$Content = @"
+$MovieContent = @"
 **Popular Movies on Plex:**
 "@   
-$Payload = [PSCustomObject]@{content = $Content}
-Invoke-RestMethod -Uri $script:DiscordURL -Body ($Payload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json'
+$MoviePayload = [PSCustomObject]@{content = $MovieContent}
+Invoke-RestMethod -Uri $script:DiscordURL -Body ($MoviePayload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json'
 SendStringToDiscord -url $DiscordURL -body $embedTopMovies
 
-$Content = @"
+$ShowContent = @"
 **Popular TV Shows on Plex:**
 "@   
-$Payload = [PSCustomObject]@{content = $Content}
-Invoke-RestMethod -Uri $script:DiscordURL -Body ($Payload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json'
+$ShowPayload = [PSCustomObject]@{content = $ShowContent}
+Invoke-RestMethod -Uri $script:DiscordURL -Body ($ShowPayload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'Application/Json'
 SendStringToDiscord -url $DiscordURL -body $embedTopTV
 #>
