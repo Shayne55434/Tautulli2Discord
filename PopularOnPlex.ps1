@@ -125,6 +125,10 @@ function Push-ObjectToDiscord {
 [string]$strTautulliAPIKey = $objConfig.Tautulli.APIKey
 [string]$strTMDB_APIKey = $objConfig.TMDB.APIKey
 
+# Get PMS Identifier
+[object]$objPlexServerIdentifier = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_server_info"
+[string]$strPlexServerIdentifier = ($objPlexServerIdentifier.response.data | Select-Object -ExpandProperty pms_identifier)
+
 # Get and store data from Tautulli
 [object]$objDataResult = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_home_stats&grouping=1&time_range=$strDays&stats_count=$strCount"
 [array]$arrTopMovies = ($objDataResult.response.data | Where-Object -Property stat_id -eq "popular_movies").rows
@@ -146,8 +150,8 @@ foreach ($movie in $arrTopMovies) {
          url = 'https://www.themoviedb.org/movie/'
          author = @{
             name = "Open on Plex"
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F" + $movie.rating_key
-            icon_url = "https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775"
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F" + $movie.rating_key
+            icon_url = "https://i.imgur.com/FNoiYXP.png"
          }
          description = "Unknown"
          thumbnail = @{url = "https://www.programmableweb.com/sites/default/files/TMDb.jpg"}
@@ -177,8 +181,8 @@ foreach ($movie in $arrTopMovies) {
          url = "https://www.themoviedb.org/movie/$($objTMDBMovieResults.id)"
          author = @{
             name = "Open on Plex"
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($movie.rating_key)"
-            icon_url = "https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775"
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($movie.rating_key)"
+            icon_url = "https://i.imgur.com/FNoiYXP.png"
          }
          description = Get-SanitizedString -strInputString $($objTMDBMovieResults.overview)
          thumbnail = @{url = "https://image.tmdb.org/t/p/w500$($objTMDBMovieResults.poster_path)"}
@@ -216,8 +220,8 @@ foreach ($show in $arrTopTVShows) {
          #url = "https://www.themoviedb.org/movie/$($objTMDBTVResults.id)"
          author = @{
             name = "Open on Plex"
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($show.rating_key)"
-            icon_url = 'https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775'
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($show.rating_key)"
+            icon_url = 'https://i.imgur.com/FNoiYXP.png'
          }
          description = "Unknown"
          #thumbnail = @{url = "https://image.tmdb.org/t/p/w500$($objTMDBTVResults.poster_path)"}
@@ -251,8 +255,8 @@ foreach ($show in $arrTopTVShows) {
          url = "https://www.themoviedb.org/tv/$($objTMDBTVResults.id)"
          author = @{
             name = "Open on Plex"
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($show.rating_key)"
-            icon_url = "https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775"
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($show.rating_key)"
+            icon_url = "https://i.imgur.com/FNoiYXP.png"
          }
          description = Get-SanitizedString -strInputString $objTMDBTVResults.overview
          thumbnail = @{url = "https://image.tmdb.org/t/p/w500$($objTMDBTVResults.poster_path)"}
