@@ -115,6 +115,10 @@ function Push-ObjectToDiscord {
 [string]$strTautulliAPIKey = $objConfig.Tautulli.APIKey
 [string]$strTMDB_APIKey = $objConfig.TMDB.APIKey
 
+# Get PMS Identifier
+[object]$objPlexServerIdentifier = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_server_info"
+[string]$strPlexServerIdentifier = ($objPlexServerIdentifier.response.data | Select-Object -ExpandProperty pms_identifier)
+
 # Attempt to get Plex activity from Tautulli
 try {
    [object]$objCurrentActivity = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_activity"
@@ -145,8 +149,8 @@ foreach ($stream in $arrCurrentStreams) {
          url = "https://www.themoviedb.org/tv/$strTMDB_ID"
          author = @{
             name = 'Open on Plex'
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($stream.grandparent_rating_key)"
-            icon_url = 'https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775'
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($stream.grandparent_rating_key)"
+            icon_url = 'https://i.imgur.com/FNoiYXP.png'
          }
          description = Get-SanitizedString -strInputString $stream.summary
          thumbnail = @{url = "https://image.tmdb.org/t/p/w500$($objTMDBResults.poster_path)"}
@@ -176,8 +180,8 @@ foreach ($stream in $arrCurrentStreams) {
          title = $strSanitizedTitle
          author = @{
             name = 'Open on Plex'
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($stream.rating_key)"
-            icon_url = 'https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775'
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($stream.rating_key)"
+            icon_url = 'https://i.imgur.com/FNoiYXP.png'
          }
          description = Get-SanitizedString -strInputString $stream.summary
          fields = @{
@@ -210,8 +214,8 @@ foreach ($stream in $arrCurrentStreams) {
          url = "https://www.themoviedb.org/movie/$strTMDB_ID"
          author = @{
             name = "Open on Plex"
-            url = "https://app.plex.tv/desktop/#!/server/f811f094a93f7263b1e3ad8787e1cefd99d92ce4/details?key=%2Flibrary%2Fmetadata%2F$($stream.rating_key)"
-            icon_url = 'https://styles.redditmedia.com/t5_2ql7e/styles/communityIcon_mdwl2x2rtzb11.png?width=256&s=14a77880afea69b1dac1b0f14dc52b09c492b775'
+            url = "https://app.plex.tv/desktop/#!/server/$strPlexServerIdentifier/details?key=%2Flibrary%2Fmetadata%2F$($stream.rating_key)"
+            icon_url = 'https://i.imgur.com/FNoiYXP.png'
          }
          description = Get-SanitizedString -strInputString $stream.summary
          thumbnail = @{url = "https://image.tmdb.org/t/p/w500$($objTMDBResults.poster_path)"}
