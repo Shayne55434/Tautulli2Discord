@@ -9,16 +9,16 @@ Note - For this script to send files to Discord, you must
 #############################################################>
 
 # Enter the path to the config file for Tautulli and Discord
-[string]$strPathToConfig = "$PSScriptRoot\config.json"
+[string]$strPathToConfig = ".\config.json"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
 [string]$strScriptName = "PlexPlayStats"
 
 # Path to where the chart image should be saved and sent from
-[string]$strImagePath = "$PSScriptRoot\MonthlyStats.png"
+[string]$strImagePath = ".\MonthlyStats.png"
 
 # PowerShell variables
-[string]$strSendScriptFilePath = "$PSScriptRoot\SendFileToDiscord.ps1"
+[string]$strSendScriptFilePath = ".\SendFileToDiscord.ps1"
 
 <############################################################
 Do NOT edit lines below unless you know what you are doing!

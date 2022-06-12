@@ -9,7 +9,7 @@ Note - For this script to include library sizes, you need to
 #############################################################>
 
 # Enter the path to the config file for Tautulli and Discord
-[string]$strPathToConfig = "$PSScriptRoot\config.json"
+[string]$strPathToConfig = ".\config.json"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
 [string]$strScriptName = 'PlexLibraryStats'

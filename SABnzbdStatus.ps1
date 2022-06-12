@@ -1,13 +1,13 @@
 Clear-Host
 
 # Enter the path to the config file for Tautulli and Discord
-[string]$strPathToConfig = "$PSScriptRoot\config.json"
+[string]$strPathToConfig = ".\config.json"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
 [string]$strScriptName = 'SABnzbdStatus'
 
 # Log file path
-[string]$strLogFilePath = "$PSScriptRoot\SABLog.txt"
+[string]$strLogFilePath = ".\SABLog.txt"
 
 <############################################################
  Do NOT edit lines below unless you know what you are doing!
