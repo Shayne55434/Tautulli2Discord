@@ -1,10 +1,10 @@
 ﻿Clear-Host
 
 # Enter the path to the config file for Tautulli and Discord
-[string]$strPathToConfig = ".\config.json"
+[string]$strPathToConfig = "$PSScriptRoot\config.json"
 
 # Log file path
-[string]$strStreamLogPath = ".\StreamLog.txt"
+[string]$strStreamLogPath = "$PSScriptRoot\StreamLog.txt"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
 [string]$strScriptName = 'CurrentStreams'

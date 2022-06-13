@@ -7,7 +7,7 @@ Note - In order for this to work, you must set "api_sql = 1"
 #############################################################>
 
 # Enter the path to the config file for Tautulli and Discord
-[string]$strPathToConfig = ".\config.json"
+[string]$strPathToConfig = "$PSScriptRoot\config.json"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
 [string]$strScriptName = 'TopPlexStats'
