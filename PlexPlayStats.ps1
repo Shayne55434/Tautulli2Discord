@@ -82,47 +82,35 @@ function New-ChartImage {
    $chart1.Series["Month"].chartarea = "ChartArea1"
    $chart1.Series["Month"].Legend = "Legend1"
    $chart1.Series["Month"].color = "#90b19c"
-   $arrPlaysPerMonth.Month | ForEach-Object {$chart1.Series["Month"].Points.addxy($_, $_) } | Out-Null
+   $null = $arrPlaysPerMonth.Month | ForEach-Object {$chart1.Series["Month"].Points.addxy($_, $_) }
    
-   # Data Series - Movie Plays
-   $null = $chart1.Series.Add("MoviePlays")
-   $chart1.Series["MoviePlays"].ChartType = "Column"
-   $chart1.Series["MoviePlays"].BorderWidth  = 3
-   $chart1.Series["MoviePlays"].IsVisibleInLegend = $true
-   $chart1.Series["MoviePlays"].chartarea = "ChartArea1"
-   $chart1.Series["MoviePlays"].Legend = "Legend1"
-   $chart1.Series["MoviePlays"].color = "#5B9BD5"
-   $arrPlaysPerMonth.MoviePlays | ForEach-Object {$chart1.Series["MoviePlays"].Points.addxy("MoviePlays", $_) } | Out-Null
+   # Data Series - Each Media Type
+   [hashtable]$htbMediaTypeColors = @{
+      TV = "#00CCFF"
+      Movies = "#FFC230"
+      Music = "#009253"
+      "Live TV" = "#A5A5A5"
+   }
+   foreach ($MediaType in $arrMediaTypes) {
+      $null = $chart1.Series.Add($MediaType)
+      $chart1.Series[$($MediaType)].ChartType = "Column"
+      $chart1.Series[$($MediaType)].BorderWidth  = 3
+      $chart1.Series[$($MediaType)].IsVisibleInLegend = $true
+      $chart1.Series[$($MediaType)].chartarea = "ChartArea1"
+      $chart1.Series[$($MediaType)].Legend = "Legend1"
+      $chart1.Series[$($MediaType)].color = $htbMediaTypeColors.$MediaType
+      $null = $arrPlaysPerMonth.$MediaType | ForEach-Object {$chart1.Series[$($MediaType)].Points.addxy($MediaType, $_) }
+   }
    
-   # Data Series - TV plays
-   $null = $chart1.Series.Add("TVPlays")
-   $chart1.Series["TVPlays"].ChartType = "Column"
-   $chart1.Series["TVPlays"].BorderWidth  = 3
-   $chart1.Series["TVPlays"].IsVisibleInLegend = $true
-   $chart1.Series["TVPlays"].chartarea = "ChartArea1"
-   $chart1.Series["TVPlays"].Legend = "Legend1"
-   $chart1.Series["TVPlays"].color = "#ED7D31"
-   $arrPlaysPerMonth.TVPlays | ForEach-Object {$chart1.Series["TVPlays"].Points.addxy("TVPlays", $_) } | Out-Null
-   
-   # Data Series - Music Plays
-   $null = $chart1.Series.Add("MusicPlays")
-   $chart1.Series["MusicPlays"].ChartType = "Column"
-   $chart1.Series["MusicPlays"].BorderWidth  = 3
-   $chart1.Series["MusicPlays"].IsVisibleInLegend = $true
-   $chart1.Series["MusicPlays"].chartarea = "ChartArea1"
-   $chart1.Series["MusicPlays"].Legend = "Legend1"
-   $chart1.Series["MusicPlays"].color = "#A5A5A5"
-   $arrPlaysPerMonth.MusicPlays | ForEach-Object {$chart1.Series["MusicPlays"].Points.addxy("MusicPlays", $_) } | Out-Null
-   
-   # Data Series - Total Plays
-   $null = $chart1.Series.Add("TotalPlays")
-   $chart1.Series["TotalPlays"].ChartType = "Column"
-   $chart1.Series["TotalPlays"].BorderWidth  = 3
-   $chart1.Series["TotalPlays"].IsVisibleInLegend = $true
-   $chart1.Series["TotalPlays"].chartarea = "ChartArea1"
-   $chart1.Series["TotalPlays"].Legend = "Legend1"
-   $chart1.Series["TotalPlays"].color = "#FFC000"
-   $arrPlaysPerMonth.TotalPlays | ForEach-Object {$chart1.Series["TotalPlays"].Points.addxy("TotalPlays", $_) } | Out-Null
+   # Data Series - Total
+   $null = $chart1.Series.Add("Total")
+   $chart1.Series["Total"].ChartType = "Column"
+   $chart1.Series["Total"].BorderWidth  = 3
+   $chart1.Series["Total"].IsVisibleInLegend = $true
+   $chart1.Series["Total"].chartarea = "ChartArea1"
+   $chart1.Series["Total"].Legend = "Legend1"
+   $chart1.Series["Total"].color = " #E00000"
+   $null = $arrPlaysPerMonth.Total | ForEach-Object {$chart1.Series["Total"].Points.addxy("Total", $_) }
    
    # Save Chart as Image
    $chart1.SaveImage($strImagePath,"png")
@@ -132,41 +120,46 @@ function New-ChartImage {
 [object]$objConfig = Get-Content -Path $strPathToConfig -Raw | ConvertFrom-Json
 [string]$strDiscordWebhook = $objConfig.ScriptSettings.$strScriptName.Webhook
 [string]$strPSCoreFilePath = $objConfig.ScriptSettings.$strScriptName.PSCoreFilePath
+[array]$arrMediaTypes = $objConfig.ScriptSettings.$strScriptName.MediaTypes
 [string]$strTautulliURL = $objConfig.Tautulli.URL
 [string]$strTautulliAPIKey = $objConfig.Tautulli.APIKey
 [object]$objPlaysPerMonth = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_plays_per_month"
 [array]$arrLast12Months = $objPlaysPerMonth.response.data.categories
-[array]$arrMoviePlaysPerMonth = ($objPlaysPerMonth.response.data.series | Where-Object -Property name -eq 'Movies').data
-[array]$arrTVPlaysPerMonth = ($objPlaysPerMonth.response.data.series | Where-Object -Property name -eq 'TV').data
-[array]$arrMusicPlaysPerMonth = ($objPlaysPerMonth.response.data.series | Where-Object -Property name -eq 'Music').data
+[array]$arrTopPlaysPerMonth = $objPlaysPerMonth.response.data.series | Where-Object -Property name -in $arrMediaTypes
 
-# Loop through each library
-[System.Collections.ArrayList]$arrPlaysPerMonth = @()
+# Loop through each Month and MediaType
 $i = 0
+[System.Collections.ArrayList]$arrPlaysPerMonth = @()
 foreach($month in $arrLast12Months) {
-   [hashtable]$htbCurrentMonthPlayStats = @{
+   [hashtable]$htbCurrentMonth = @{
       Month = $month
-      MoviePlays = $arrMoviePlaysPerMonth[$i]
-      TVPlays = $arrTVPlaysPerMonth[$i]
-      MusicPlays = $arrMusicPlaysPerMonth[$i]
-      TotalPlays = $arrMoviePlaysPerMonth[$i] + $arrTVPlaysPerMonth[$i] + $arrMusicPlaysPerMonth[$i]
    }
    
-   # Add section data results to final object
-   $null = $arrPlaysPerMonth.Add($htbCurrentMonthPlayStats)
+   [int]$intMonthTotal = 0
+   foreach ($MediaType in $arrTopPlaysPerMonth) {
+      [hashtable]$htbCurrentMonthPlayStats = @{
+         $MediaType.Name = $MediaType.data[$i]
+      }
+      $intMonthTotal += $MediaType.data[$i]
+      $htbCurrentMonth += $htbCurrentMonthPlayStats
+   }
+   $htbCurrentMonth += @{Total = $intMonthTotal}
+   
+   $null = $arrPlaysPerMonth.Add($htbCurrentMonth)
    $i++
 }
 
 if ($objConfig.ScriptSettings.$strScriptName.RemoveMonthsWithZeroPlays) {
    # Remove any lines with all 0s
-   $arrPlaysPerMonth = $arrPlaysPerMonth | Where-Object -Property TotalPlays -gt 0
+   $arrPlaysPerMonth = $arrPlaysPerMonth | Where-Object -Property Total -gt 0
 }
 
 # Create Chart (Call function)
 New-ChartImage
 
 # Convert results to string and send to Discord
-[string]$strBody = $arrPlaysPerMonth | ForEach-Object {[PSCustomObject]$_} | Format-Table -AutoSize -Property Month, MoviePlays, TVPlays, MusicPlays, TotalPlays | Out-String
+[array]$arrProperties = @('Month') + $arrMediaTypes + @('Total') # This is so the final table is in a logical ordering.
+[string]$strBody = $arrPlaysPerMonth | ForEach-Object {[PSCustomObject]$_} | Format-Table -AutoSize -Property @($arrProperties) | Out-String
 [object]$objPayload = @{
    content = @"
 **Monthly Plays:**

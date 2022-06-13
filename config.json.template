@@ -25,6 +25,7 @@
       "PlexPlayStats" : {
          "Webhook" : "https://discord.com/api/webhooks/<redacted>/<redacted>"
          "PSCoreFilePath" : "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+         "MediaTypes" : ["TV", "Movies", "Music", "Live TV"],
          "RemoveMonthsWithZeroPlays" : true
       },
       "PopularOnPlex" : {
