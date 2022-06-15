@@ -161,12 +161,7 @@ New-ChartImage
 [array]$arrProperties = @('Month') + $arrMediaTypes + @('Total') # This is so the final table is in a logical ordering.
 [string]$strBody = $arrPlaysPerMonth | ForEach-Object {[PSCustomObject]$_} | Format-Table -AutoSize -Property @($arrProperties) | Out-String
 [object]$objPayload = @{
-   content = @"
-**Monthly Plays:**
-``````
-$strBody
-``````
-"@
+   content = "**Monthly Plays:**`n``````$strBody``````"
 } | ConvertTo-Json -Depth 4
 Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
 

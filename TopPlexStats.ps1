@@ -133,15 +133,15 @@ GROUP BY user, media_type
 "
 # Get and store results from the query
 [object]$objTautulliQueryResults = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=sql&query=$($strQuery)"
-[object]$objTopUsersInMovies = $objTautulliQueryResults.response.data | Where-Object -Property media_type -EQ 'Movie' | Sort-Object -Property plays -Descending | Select-Object -Property friendly_name, media_type, plays -First $strCount
-[object]$objTopUsersInTV = $objTautulliQueryResults.response.data | Where-Object -Property media_type -EQ 'TV Show' | Sort-Object -Property plays -Descending | Select-Object -Property friendly_name, media_type, plays -First $strCount
-[object]$objTopUsersInMusic = $objTautulliQueryResults.response.data | Where-Object -Property media_type -EQ 'Music' | Sort-Object -Property plays -Descending | Select-Object -Property friendly_name, media_type, plays -First $strCount
+[object]$objTopUsersInMovies = $objTautulliQueryResults.response.data | Where-Object -property media_type -eq 'Movie' | Sort-Object -property plays -Descending | Select-Object -property friendly_name, media_type, plays -First $strCount
+[object]$objTopUsersInTV = $objTautulliQueryResults.response.data | Where-Object -property media_type -eq 'TV Show' | Sort-Object -property plays -Descending | Select-Object -property friendly_name, media_type, plays -First $strCount
+[object]$objTopUsersInMusic = $objTautulliQueryResults.response.data | Where-Object -property media_type -eq 'Music' | Sort-Object -property plays -Descending | Select-Object -property friendly_name, media_type, plays -First $strCount
 
 # Get and store Home Stats from Tautulli
 [object]$objTautulliHomeStats = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_home_stats&grouping=1&time_range=$strDays&stats_count=$strCount"
-[object]$objTopUsers = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_users").rows | Sort-Object -Property total_plays -Descending | Select-Object -Property friendly_name, total_plays
-[object]$objTopPlatforms = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_platforms").rows  | Sort-Object -Property total_plays -Descending | Select-Object -Property platform, total_plays
-[object]$objMostConcurrent = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "most_concurrent").rows | Sort-Object -Property count -Descending | Select-Object -Property title, count
+[object]$objTopUsers = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_users").rows | Sort-Object -property total_plays -Descending | Select-Object -property friendly_name, total_plays
+[object]$objTopPlatforms = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_platforms").rows  | Sort-Object -property total_plays -Descending | Select-Object -property platform, total_plays
+[object]$objMostConcurrent = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "most_concurrent").rows | Sort-Object -property count -Descending | Select-Object -property title, count
 
 [System.Collections.ArrayList]$arrAllStats = @()
 foreach ($user in $objTopUsers) {
@@ -208,7 +208,7 @@ foreach ($stat in $objMostConcurrent) {
 # Group and sort the Array in a logical order
 [System.Collections.ArrayList]$arrAllStatsGroupedAndOrdered = @()
 foreach ($value in "Top $strCount Users Overall", "Top $strCount Users in Movies", "Top $strCount Users in TV", "Top $strCount Users in Music", "Top $strCount Platforms", 'Top Concurrent Streams') {
-   [object]$objGroupInfo = ($arrAllStats | ForEach-Object {[PSCustomObject]$_} | Group-Object -Property Group | Where-Object {$_.Name -eq $value } | Sort-Object Name)
+   [object]$objGroupInfo = ($arrAllStats | ForEach-Object {[PSCustomObject]$_} | Group-Object -property Group | Where-Object {$_.Name -eq $value } | Sort-Object Name)
    if($null -ne $objGroupInfo) {
       $null = $arrAllStatsGroupedAndOrdered.Add($objGroupInfo)
    }
@@ -216,7 +216,7 @@ foreach ($value in "Top $strCount Users Overall", "Top $strCount Users in Movies
 
 # Convert results to string and send to Discord
 foreach ($group in $arrAllStatsGroupedAndOrdered) {
-   [string]$strBody = $group.group | Select-Object -Property Metric, Value | Format-Table -AutoSize -HideTableHeaders | Out-String
+   [string]$strBody = $group.group | Select-Object -property Metric, Value | Format-Table -AutoSize -HideTableHeaders | Out-String
    [object]$objPayload = @{
       content = "**$($group.Name)** for the last **$($strDays)** Days!`n``````$strBody``````"
    } | ConvertTo-Json -Depth 4

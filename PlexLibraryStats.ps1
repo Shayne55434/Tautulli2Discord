@@ -47,11 +47,11 @@ function Push-ObjectToDiscord {
 [string]$strTautulliURL = $objConfig.Tautulli.URL
 [string]$strTautulliAPIKey = $objConfig.Tautulli.APIKey
 [object]$objLibrariesTable = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_libraries_table"
-[object]$objLibraries = $objLibrariesTable.response.data.data | Select-Object section_id, section_name, section_type, count, parent_count, child_count | Where-Object -Property section_name -notin ($arrExcludedLibraries)
+[array]$arrLibraries = $objLibrariesTable.response.data.data | Select-Object section_id, section_name, section_type, count, parent_count, child_count | Where-Object -Property section_name -notin ($arrExcludedLibraries)
 
 # Loop through each library
 [System.Collections.ArrayList]$arrLibraryStats = @()
-foreach ($Library in $objLibraries){
+foreach ($Library in $arrLibraries){
    [float]$fltTotalSizeBytes = (Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_library_media_info&section_id=$($Library.section_id)").response.data.total_file_size
    
    if ($fltTotalSizeBytes -ge '1000000000000'){
@@ -78,25 +78,127 @@ foreach ($Library in $objLibraries){
    $null = $arrLibraryStats.Add($htbCurrentLibraryStats)
 }
 
-# Sort the results
-$arrLibraryStats = $arrLibraryStats | Sort-Object -Property Library, Type
-[string]$strBody = $null
-foreach($Library in $arrLibraryStats){
-   if ($Library.Library -eq 'Audiobooks') {
-      $strBody += "> $($Library.Library) - **$($Library.count)** authors, **$($Library.SeasonAlbumCount)** books, **$($Library.EpisodeTrackCount)** chapters. ($($Library.Size)$($Library.Format))`n"
+# Movie Library Stats
+if (($arrLibraryStats | Where-Object {$_.Type -eq 'movie'}).Count -gt 0) {
+   [System.Collections.ArrayList]$arrMovieLibraryStats = @()
+   [PSCustomObject]$objMovieFields = $null
+   [hashtable]$htbMovieLibraryStats = @{
+      color = '13400320'
+      title = 'Movie Libraries'
+      timestamp = ((Get-Date).AddHours(5)).ToString("yyyy-MM-ddTHH:mm:ss.Mss")
    }
-   elseif ($Library.Type -eq 'movie') {
-      $strBody += "> $($Library.Library) - **$($Library.count)** movies. ($($Library.Size)$($Library.Format))`n"
+   
+   foreach ($MovieLibrary in ($arrLibraryStats | Where-Object {$_.Type -eq 'movie'})) {
+      [PSCustomObject]$objTempMovieFields = @{
+         name = 'Library'
+         value = $MovieLibrary.Library
+         inline = $true
+      },@{
+         name = 'Count'
+         value = $MovieLibrary.Count
+         inline = $true
+      },@{
+         name = 'Size'
+         value = "$($MovieLibrary.Size)$($MovieLibrary.Format)"
+         inline = $true
+      }
+      
+      $objMovieFields += $objTempMovieFields
    }
-   elseif ($Library.Type -eq 'show') {
-      $strBody += "> $($Library.Library) - **$($Library.count)** shows, **$($Library.SeasonAlbumCount)** seasons, **$($Library.EpisodeTrackCount)** episodes. ($($Library.Size)$($Library.Format))`n"
-   }
-   elseif ($Library.Type -eq 'artist') {
-      $strBody += "> $($Library.Library) - **$($Library.count)** artists, **$($Library.SeasonAlbumCount)** albums, **$($Library.EpisodeTrackCount)** tracks. ($($Library.Size)$($Library.Format))`n"
-   }
+   $null = $htbMovieLibraryStats.Add('fields', $objMovieFields)
+   $null = $arrMovieLibraryStats.Add($htbMovieLibraryStats)
+   
+   [object]$objPayload = @{
+      embeds = $arrMovieLibraryStats
+   } | ConvertTo-Json -Depth 4
+   Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
 }
 
-[object]$objPayload = @{
-   content = "**Library stats:**`n$strBody"
-} | ConvertTo-Json -Depth 4
-Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
+# TV Library Stats
+if (($arrLibraryStats | Where-Object {$_.Type -eq 'show'}).Count -gt 0) {
+   [System.Collections.ArrayList]$arrTVLibraryStats = @()
+   [PSCustomObject]$objTVFields = $null
+   [hashtable]$htbTVLibraryStats = @{
+      color = '40635'
+      title = 'TV Libraries'
+      timestamp = ((Get-Date).AddHours(5)).ToString("yyyy-MM-ddTHH:mm:ss.Mss")
+   }
+   
+   foreach ($TVLibrary in ($arrLibraryStats | Where-Object {$_.Type -eq 'show'})) {
+      [PSCustomObject]$objTempTVFields = @{
+         name = 'Library'
+         value = $TVLibrary.Library
+         inline = $false
+      },@{
+         name = 'Shows'
+         value = $TVLibrary.Count
+         inline = $true
+      },@{
+         name = 'Seasons'
+         value = $TVLibrary.SeasonAlbumCount
+         inline = $true
+      },@{
+         name = 'Episodes'
+         value = $TVLibrary.EpisodeTrackCount
+         inline = $true
+      },@{
+         name = 'Size'
+         value = "$($TVLibrary.Size)$($MovieLibrary.Format)"
+         inline = $false
+      }
+      
+      $objTVFields += $objTempTVFields
+   }
+   
+   $null = $htbTVLibraryStats.Add('fields', $objTVFields)
+   $null = $arrTVLibraryStats.Add($htbTVLibraryStats)
+   
+   [object]$objPayload = @{
+      embeds = $arrTVLibraryStats
+   } | ConvertTo-Json -Depth 4
+   Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
+}
+
+# Music Library Stats
+if (($arrLibraryStats | Where-Object {$_.Type -eq 'artist'}).Count -gt 0) {
+   [System.Collections.ArrayList]$arrMusicLibraryStats = @()
+   [PSCustomObject]$objMusicFields = $null
+   [hashtable]$htbMusicLibraryStats = @{
+      color = '39270'
+      title = 'Music Libraries'
+      timestamp = ((Get-Date).AddHours(5)).ToString("yyyy-MM-ddTHH:mm:ss.Mss")
+   }
+   
+   foreach ($MusicLibrary in ($arrLibraryStats | Where-Object {$_.Type -eq 'artist'})) {
+      [PSCustomObject]$objTempMusicFields = @{
+         name = 'Library'
+         value = $MusicLibrary.Library
+         inline = $false
+      },@{
+         name = if($MusicLibrary.Library -match 'book'){'Authors'}else{'Artists'}
+         value = $MusicLibrary.Count
+         inline = $true
+      },@{
+         name = if($MusicLibrary.Library -match 'book'){'Books'}else{'Album'}
+         value = $MusicLibrary.SeasonAlbumCount
+         inline = $true
+      },@{
+         name = if($MusicLibrary.Library -match 'book'){'Chapters'}else{'Tracks'}
+         value = $MusicLibrary.EpisodeTrackCount
+         inline = $true
+      },@{
+         name = 'Size'
+         value = "$($MusicLibrary.Size)$($MovieLibrary.Format)"
+         inline = $false
+      }
+      
+      $objMusicFields += $objTempMusicFields
+   }
+   $null = $htbMusicLibraryStats.Add('fields', $objMusicFields)
+   $null = $arrMusicLibraryStats.Add($htbMusicLibraryStats)
+   
+   [object]$objPayload = @{
+      embeds = $arrMusicLibraryStats
+   } | ConvertTo-Json -Depth 4
+   Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
+}
