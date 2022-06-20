@@ -1,10 +1,16 @@
 Clear-Host
 
+<############################################################
+Note - In order for this to work, you must set "api_sql = 1"
+       in the Tautulli config file. It will require a restart
+       of Tautulli.
+#############################################################>
+
 # Enter the path to the config file for Tautulli and Discord
 [string]$strPathToConfig = "$PSScriptRoot\config.json"
 
 # Script name MUST match what is in config.json under "ScriptSettings"
-[string]$strScriptName = 'TopPlexStats'
+[string]$strScriptName = 'TopUsersByMediaType'
 
 <############################################################
 Do NOT edit lines below unless you know what you are doing!
@@ -89,63 +95,53 @@ function Get-SanitizedString {
 # Parse the config file and assign variables
 [object]$objConfig = Get-Content -Path $strPathToConfig -Raw | ConvertFrom-Json
 [string]$strDiscordWebhook = $objConfig.ScriptSettings.$strScriptName.Webhook
+[array]$arrMediaTypes = $objConfig.ScriptSettings.$strScriptName.MediaTypes
 [string]$strCount = $objConfig.ScriptSettings.$strScriptName.Count
 [string]$strDays = $objConfig.ScriptSettings.$strScriptName.Days
 [string]$strTautulliURL = $objConfig.Tautulli.URL
 [string]$strTautulliAPIKey = $objConfig.Tautulli.APIKey
+[string]$strQuery = "
+SELECT
+CASE
+   WHEN friendly_name IS NULL THEN username
+   ELSE friendly_name
+END AS FriendlyName,
+CASE
+   WHEN media_type = 'episode' THEN 'TV'
+   WHEN media_type = 'movie' THEN 'Movies'
+   WHEN media_type = 'track' THEN 'Music'
+   ELSE media_type
+END AS MediaType,
+count(user) AS Plays
+FROM (
+   SELECT
+   session_history.user,
+   session_history.user_id,
+   users.username,
+   users.friendly_name,
+   started,
+   session_history_metadata.media_type
+   FROM session_history
+   JOIN session_history_metadata
+      ON session_history_metadata.id = session_history.id
+   LEFT OUTER JOIN users
+      ON session_history.user_id = users.user_id
+   WHERE datetime(session_history.stopped, 'unixepoch', 'localtime') >= datetime('now', '-$strDays days', 'localtime')
+   AND users.user_id <> 0
+   GROUP BY session_history.reference_id
+) AS Results
+GROUP BY user, media_type
+"
 
-# Get and store Home Stats from Tautulli
-[object]$objTautulliHomeStats = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=get_home_stats&grouping=1&time_range=$strDays&stats_count=$strCount"
-[object]$objTopUsers = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_users").rows | Sort-Object -property total_plays -Descending | Select-Object -property friendly_name, total_plays
-[object]$objTopPlatforms = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "top_platforms").rows  | Sort-Object -property total_plays -Descending | Select-Object -property platform, total_plays
-[object]$objMostConcurrent = ($objTautulliHomeStats.response.data | Where-Object -property stat_id -eq "most_concurrent").rows | Sort-Object -property count -Descending | Select-Object -property title, count
+# Get and store results from the query
+[object]$objTautulliQueryResults = Invoke-RestMethod -Method Get -Uri "$strTautulliURL/api/v2?apikey=$strTautulliAPIKey&cmd=sql&query=$($strQuery)"
+[array]$arrTopUsersByMediaType = $objTautulliQueryResults.response.data | Where-Object -Property MediaType -in $arrMediaTypes | Group-Object -Property MediaType
 
-[System.Collections.ArrayList]$arrAllStats = @()
-foreach ($user in $objTopUsers) {
-   [hashtable]$htbCurrentStats = @{
-      Group = "Top $strCount Users Overall"
-      Metric = $user.friendly_name
-      Value = "$($user.total_plays) plays"
-   }
-   
-   # Add section data results to final object
-   $null = $arrAllStats.Add($htbCurrentStats)
-}
-foreach ($platform in $objTopPlatforms) {
-   [hashtable]$htbCurrentStats = @{
-      Group = "Top $strCount Platforms"
-      Metric = $platform.platform
-      Value = "$($platform.total_plays) plays"
-   }
-   
-   # Add section data results to final object
-   $null = $arrAllStats.Add($htbCurrentStats)
-}
-foreach ($stat in $objMostConcurrent) {
-   [hashtable]$htbCurrentStats = @{
-      Group = "Top Concurrent Streams"
-      Metric = $stat.title
-      Value = $stat.count
-   }
-   
-   # Add section data results to final object
-   $null = $arrAllStats.Add($htbCurrentStats)
-}
-
-# Group and sort the Array in a logical order
-[System.Collections.ArrayList]$arrAllStatsGroupedAndOrdered = @()
-foreach ($value in "Top $strCount Users Overall", "Top $strCount Platforms", 'Top Concurrent Streams') {
-   [object]$objGroupInfo = ($arrAllStats | ForEach-Object {[PSCustomObject]$_} | Group-Object -property Group | Where-Object {$_.Name -eq $value } | Sort-Object Name)
-   if($null -ne $objGroupInfo) {
-      $null = $arrAllStatsGroupedAndOrdered.Add($objGroupInfo)
-   }
-}
-
-# Convert results to string and send to Discord
-foreach ($group in $arrAllStatsGroupedAndOrdered) {
-   [string]$strBody = $group.group | Select-Object -property Metric, Value | Format-Table -AutoSize -HideTableHeaders | Out-String
+foreach ($group in $arrTopUsersByMediaType) {
+   [string]$strBody = $group.Group | Sort-Object -Property plays -Descending | Select-Object -Property FriendlyName, Plays -First $strCount | Out-String
    [object]$objPayload = @{
-      content = "**$($group.Name)** for the last **$($strDays)** Days!`n``````$strBody``````"
+      content = "**Top $strCount users in $($group.Name)** for the last **$($strDays)** Days!`n``````$strBody``````"
    } | ConvertTo-Json -Depth 4
+   
    Push-ObjectToDiscord -strDiscordWebhook $strDiscordWebhook -objPayload $objPayload
 }

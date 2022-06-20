@@ -179,7 +179,7 @@ if (($arrLibraryStats | Where-Object {$_.Type -eq 'artist'}).Count -gt 0) {
          value = $MusicLibrary.Count
          inline = $true
       },@{
-         name = if($MusicLibrary.Library -match 'book'){'Books'}else{'Album'}
+         name = if($MusicLibrary.Library -match 'book'){'Books'}else{'Albums'}
          value = $MusicLibrary.SeasonAlbumCount
          inline = $true
       },@{

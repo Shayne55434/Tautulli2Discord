@@ -40,6 +40,12 @@
          "Webhook" : "https://discord.com/api/webhooks/<redacted>/<redacted>"
          "Count" : 5,
          "Days" : 30
+      },
+      "TopUsersByMediaType" : {
+         "Webhook" : "https://discord.com/api/webhooks/<redacted>/<redacted>",
+         "MediaTypes" : ["TV", "Movies", "Music"],
+         "Count" : 5,
+         "Days" : 30
       }
    }
 }
