@@ -64,7 +64,7 @@ foreach ($Library in $arrLibraries){
    }
    
    # Fill Temp object with current section data
-   [hashtable]$htbCurrentLibraryStats = @{
+   $objTemp = [PSCustomObject]@{
       Library = $Library.section_name
       Type = $Library.section_type
       Count = $Library.count
@@ -75,7 +75,7 @@ foreach ($Library in $arrLibraries){
    }
    
    # Add section data results to final object
-   $null = $arrLibraryStats.Add($htbCurrentLibraryStats)
+   $arrLibraryStats += $objTemp
 }
 
 # Movie Library Stats
@@ -89,7 +89,7 @@ if (($arrLibraryStats | Where-Object {$_.Type -eq 'movie'}).Count -gt 0) {
    }
    
    foreach ($MovieLibrary in ($arrLibraryStats | Where-Object {$_.Type -eq 'movie'})) {
-      [PSCustomObject]$objTempMovieFields = @{
+      $objTempMovieFields = [PSCustomObject]@{
          name = 'Library'
          value = $MovieLibrary.Library
          inline = $true
@@ -143,7 +143,7 @@ if (($arrLibraryStats | Where-Object {$_.Type -eq 'show'}).Count -gt 0) {
          inline = $true
       },@{
          name = 'Size'
-         value = "$($TVLibrary.Size)$($MovieLibrary.Format)"
+         value = "$($TVLibrary.Size)$($TVLibrary.Format)"
          inline = $false
       }
       
@@ -188,7 +188,7 @@ if (($arrLibraryStats | Where-Object {$_.Type -eq 'artist'}).Count -gt 0) {
          inline = $true
       },@{
          name = 'Size'
-         value = "$($MusicLibrary.Size)$($MovieLibrary.Format)"
+         value = "$($MusicLibrary.Size)$($MusicLibrary.Format)"
          inline = $false
       }
       
