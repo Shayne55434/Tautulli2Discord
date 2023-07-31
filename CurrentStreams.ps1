@@ -141,7 +141,7 @@ foreach ($stream in $arrCurrentStreams) {
    # TV
    if ($stream.media_type -eq 'episode') {
       [string]$strTMDB_ID = ($stream.guids | Where-Object {$_ -match 'tmdb'}).Split('/')[2]
-      [object]$objTMDBResults = Get-TMDBInfo -strAPIKey $strTMDB_APIKey -strMediaType tv -strTMDB_ID $strTMDB_ID
+      [object]$objTMDBResults = Get-TMDBInfo -strAPIKey $strTMDB_APIKey -strMediaType 'tv' -strTMDB_ID $strTMDB_ID
       
       [hashtable]$htbEmbedParameters = @{
          color = '40635'
